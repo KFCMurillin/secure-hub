@@ -1,6 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState, useMemo } from "react";
-import { LogOut, Cpu, HardDrive, MemoryStick, Wifi, Search, AlertTriangle, ShieldAlert, Info, XCircle } from "lucide-react";
+import { LogOut, Cpu, HardDrive, MemoryStick, Wifi, Search, AlertTriangle, ShieldAlert, Info, XCircle, LayoutDashboard, AppWindow } from "lucide-react";
 
 /* ============================================================
    CONFIGURAÇÃO: Adicione ou remova aplicações aqui
@@ -46,6 +46,8 @@ const severityConfig: Record<AlertSeverity, { color: string; bg: string; border:
   medium: { color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/30", icon: AlertTriangle },
   info: { color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/30", icon: Info },
 };
+
+type Tab = "overview" | "alerts" | "apps";
 
 /* Simulated server metrics */
 const useServerMetrics = () => {
@@ -94,6 +96,7 @@ const Dashboard = () => {
   const [search, setSearch] = useState("");
   const [alerts, setAlerts] = useState<SecurityAlert[]>(INITIAL_ALERTS);
   const [alertFilter, setAlertFilter] = useState<AlertSeverity | "all">("all");
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
   const metrics = useServerMetrics();
 
   useEffect(() => {
@@ -138,32 +141,72 @@ const Dashboard = () => {
     return `${d.toLocaleDateString("pt-BR")} às ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
   };
 
+  const tabs: { id: Tab; label: string; icon: React.ElementType; badge?: number }[] = [
+    { id: "overview", label: "Visão Geral", icon: LayoutDashboard },
+    { id: "alerts", label: "Alertas", icon: ShieldAlert, badge: alertCounts.total },
+    { id: "apps", label: "Aplicações", icon: AppWindow },
+  ];
+
   return (
     <div className="min-h-screen animate-fade-in">
       {/* Top Bar */}
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-3">
-          <span className="text-sm">🟢 Servidor Online</span>
-          {alertCounts.critical > 0 && (
-            <span className="flex items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-medium text-red-400">
-              <XCircle className="h-3 w-3" /> {alertCounts.critical} crítico{alertCounts.critical > 1 ? "s" : ""}
+      <header className="sticky top-0 z-10 border-b border-border bg-card px-4 sm:px-6">
+        <div className="flex items-center justify-between py-3">
+          <div className="flex items-center gap-3">
+            <span className="text-sm">🟢 Servidor Online</span>
+            {alertCounts.critical > 0 && (
+              <button
+                onClick={() => setActiveTab("alerts")}
+                className="flex items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-medium text-red-400 hover:bg-red-500/25 transition-colors"
+              >
+                <XCircle className="h-3 w-3" /> {alertCounts.critical} crítico{alertCounts.critical > 1 ? "s" : ""}
+              </button>
+            )}
+            <span className="hidden sm:inline text-sm text-muted-foreground">
+              {formatDate(clock)} • {formatTime(clock)}
             </span>
-          )}
-          <span className="hidden sm:inline text-sm text-muted-foreground">
-            {formatDate(clock)} • {formatTime(clock)}
-          </span>
+          </div>
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground hover:border-primary"
+          >
+            <LogOut className="h-4 w-4" />
+            Sair
+          </button>
         </div>
-        <button
-          onClick={logout}
-          className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground hover:border-primary"
-        >
-          <LogOut className="h-4 w-4" />
-          Sair
-        </button>
+
+        {/* Tabs */}
+        <nav className="flex gap-1 -mb-px">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                  isActive
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {tab.label}
+                {tab.badge !== undefined && tab.badge > 0 && (
+                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
+                    isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                  }`}>
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        {/* Welcome */}
+        {/* Welcome — always visible */}
         <div className="mb-8 animate-fade-in">
           <h1 className="text-3xl font-bold text-foreground">
             Bem-vindo, {user ? user.charAt(0).toUpperCase() + user.slice(1) : ""}! 👋
@@ -174,141 +217,172 @@ const Dashboard = () => {
           <p className="sm:hidden mt-1 text-sm text-muted-foreground">{formatTime(clock)}</p>
         </div>
 
-        {/* Security Alerts */}
-        <div className="mb-10 animate-fade-in">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <ShieldAlert className="h-5 w-5 text-primary" />
-              Alertas de Segurança
-              {alertCounts.total > 0 && (
-                <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">{alertCounts.total}</span>
-              )}
-            </h2>
-            <div className="flex gap-1.5 flex-wrap">
-              {(["all", "critical", "high", "medium", "info"] as const).map((sev) => (
-                <button
-                  key={sev}
-                  onClick={() => setAlertFilter(sev)}
-                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                    alertFilter === sev
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {sev === "all" ? "Todos" : sev.charAt(0).toUpperCase() + sev.slice(1)}
-                  {sev !== "all" && ` (${alertCounts[sev]})`}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {activeAlerts.length === 0 ? (
-            <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
-              ✅ Nenhum alerta ativo
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {activeAlerts.map((alert) => {
-                const cfg = severityConfig[alert.severity];
-                const AlertIcon = cfg.icon;
-                return (
-                  <div
-                    key={alert.id}
-                    className={`flex items-start gap-3 rounded-xl border ${cfg.border} ${cfg.bg} p-4 transition-all`}
-                  >
-                    <AlertIcon className={`h-5 w-5 mt-0.5 shrink-0 ${cfg.color}`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">{alert.title}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {alert.source} • {alert.time}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => dismissAlert(alert.id)}
-                      className="shrink-0 rounded-lg p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                      title="Dispensar"
-                    >
-                      <XCircle className="h-4 w-4" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Server Metrics */}
-        <h2 className="mb-4 text-lg font-semibold text-foreground">Métricas do Servidor</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-10">
-          <div className="rounded-xl border border-border bg-card p-4">
-            <MetricBar label="CPU" value={metrics.cpu} icon={Cpu} />
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <MetricBar label="RAM" value={metrics.ram} icon={MemoryStick} />
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <MetricBar label="Disco" value={metrics.disk} icon={HardDrive} />
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <MetricBar label="Rede" value={metrics.network} icon={Wifi} unit=" MB/s" />
-          </div>
-        </div>
-
-        {/* Stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-10">
-          <div className="rounded-xl border border-border bg-card p-4 text-center">
-            <p className="text-2xl font-bold text-primary">{metrics.containersRunning}/{metrics.containers}</p>
-            <p className="text-xs text-muted-foreground mt-1">Containers Ativos</p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4 text-center">
-            <p className="text-2xl font-bold text-primary">{metrics.uptime}</p>
-            <p className="text-xs text-muted-foreground mt-1">Uptime</p>
-          </div>
-          <div className="hidden sm:block rounded-xl border border-border bg-card p-4 text-center">
-            <p className="text-2xl font-bold text-primary">{APPS.length}</p>
-            <p className="text-xs text-muted-foreground mt-1">Aplicações</p>
-          </div>
-        </div>
-
-        {/* Apps Header + Search */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <h2 className="text-lg font-semibold text-foreground">Suas Aplicações</h2>
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Buscar aplicações..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-border bg-muted py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-        </div>
-
-        {filteredApps.length === 0 ? (
-          <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
-            Nenhuma aplicação encontrada para "{search}"
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredApps.map((app, i) => (
-              <div
-                key={app.name}
-                className={`rounded-xl border border-border bg-card p-5 card-hover animate-fade-in animate-fade-in-delay-${(i % 4) + 1}`}
+        {/* ===================== TAB: Visão Geral ===================== */}
+        {activeTab === "overview" && (
+          <div className="animate-fade-in">
+            {/* Quick alert summary */}
+            {alertCounts.critical + alertCounts.high > 0 && (
+              <button
+                onClick={() => setActiveTab("alerts")}
+                className="w-full mb-6 flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-left transition-colors hover:bg-red-500/15"
               >
-                <div className="text-3xl mb-3">{app.icon}</div>
-                <h3 className="font-bold text-foreground">{app.name}</h3>
-                <p className="text-sm text-muted-foreground mt-1 mb-4">{app.desc}</p>
-                <a
-                  href={app.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-                >
-                  Acessar →
-                </a>
+                <ShieldAlert className="h-5 w-5 text-red-400 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">
+                    {alertCounts.critical + alertCounts.high} alerta{alertCounts.critical + alertCounts.high > 1 ? "s" : ""} importante{alertCounts.critical + alertCounts.high > 1 ? "s" : ""}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {alertCounts.critical > 0 && `${alertCounts.critical} crítico`}
+                    {alertCounts.critical > 0 && alertCounts.high > 0 && " • "}
+                    {alertCounts.high > 0 && `${alertCounts.high} alto`}
+                    {" — Clique para ver detalhes"}
+                  </p>
+                </div>
+                <span className="text-xs text-muted-foreground">Ver →</span>
+              </button>
+            )}
+
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Métricas do Servidor</h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-10">
+              <div className="rounded-xl border border-border bg-card p-4">
+                <MetricBar label="CPU" value={metrics.cpu} icon={Cpu} />
               </div>
-            ))}
+              <div className="rounded-xl border border-border bg-card p-4">
+                <MetricBar label="RAM" value={metrics.ram} icon={MemoryStick} />
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4">
+                <MetricBar label="Disco" value={metrics.disk} icon={HardDrive} />
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4">
+                <MetricBar label="Rede" value={metrics.network} icon={Wifi} unit=" MB/s" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="rounded-xl border border-border bg-card p-4 text-center">
+                <p className="text-2xl font-bold text-primary">{metrics.containersRunning}/{metrics.containers}</p>
+                <p className="text-xs text-muted-foreground mt-1">Containers Ativos</p>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4 text-center">
+                <p className="text-2xl font-bold text-primary">{metrics.uptime}</p>
+                <p className="text-xs text-muted-foreground mt-1">Uptime</p>
+              </div>
+              <div className="hidden sm:block rounded-xl border border-border bg-card p-4 text-center">
+                <p className="text-2xl font-bold text-primary">{APPS.length}</p>
+                <p className="text-xs text-muted-foreground mt-1">Aplicações</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ===================== TAB: Alertas ===================== */}
+        {activeTab === "alerts" && (
+          <div className="animate-fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <ShieldAlert className="h-5 w-5 text-primary" />
+                Alertas de Segurança
+                {alertCounts.total > 0 && (
+                  <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">{alertCounts.total}</span>
+                )}
+              </h2>
+              <div className="flex gap-1.5 flex-wrap">
+                {(["all", "critical", "high", "medium", "info"] as const).map((sev) => (
+                  <button
+                    key={sev}
+                    onClick={() => setAlertFilter(sev)}
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                      alertFilter === sev
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {sev === "all" ? "Todos" : sev.charAt(0).toUpperCase() + sev.slice(1)}
+                    {sev !== "all" && ` (${alertCounts[sev]})`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {activeAlerts.length === 0 ? (
+              <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+                ✅ Nenhum alerta ativo
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {activeAlerts.map((alert) => {
+                  const cfg = severityConfig[alert.severity];
+                  const AlertIcon = cfg.icon;
+                  return (
+                    <div
+                      key={alert.id}
+                      className={`flex items-start gap-3 rounded-xl border ${cfg.border} ${cfg.bg} p-4 transition-all`}
+                    >
+                      <AlertIcon className={`h-5 w-5 mt-0.5 shrink-0 ${cfg.color}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground">{alert.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {alert.source} • {alert.time}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => dismissAlert(alert.id)}
+                        className="shrink-0 rounded-lg p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                        title="Dispensar"
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ===================== TAB: Aplicações ===================== */}
+        {activeTab === "apps" && (
+          <div className="animate-fade-in">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <h2 className="text-lg font-semibold text-foreground">Suas Aplicações</h2>
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Buscar aplicações..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-muted py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            </div>
+
+            {filteredApps.length === 0 ? (
+              <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+                Nenhuma aplicação encontrada para &quot;{search}&quot;
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filteredApps.map((app, i) => (
+                  <div
+                    key={app.name}
+                    className={`rounded-xl border border-border bg-card p-5 card-hover animate-fade-in animate-fade-in-delay-${(i % 4) + 1}`}
+                  >
+                    <div className="text-3xl mb-3">{app.icon}</div>
+                    <h3 className="font-bold text-foreground">{app.name}</h3>
+                    <p className="text-sm text-muted-foreground mt-1 mb-4">{app.desc}</p>
+                    <a
+                      href={app.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                    >
+                      Acessar →
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </main>
