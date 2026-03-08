@@ -400,6 +400,13 @@ const Dashboard = () => {
             )}
           </div>
         )}
+
+        {/* ===================== TAB: Atividades ===================== */}
+        {activeTab === "logs" && (
+          <div className="animate-fade-in">
+            <ActivityLog />
+          </div>
+        )}
       </main>
     </div>
   );
