@@ -246,8 +246,9 @@ const Dashboard = () => {
               </button>
             )}
 
+            {/* Metric bars */}
             <h2 className="mb-4 text-lg font-semibold text-foreground">Métricas do Servidor</h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-10">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
               <div className="rounded-xl border border-border bg-card p-4">
                 <MetricBar label="CPU" value={metrics.cpu} icon={Cpu} />
               </div>
@@ -262,7 +263,13 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {/* Charts */}
+            <div className="mb-8">
+              <MetricCharts />
+            </div>
+
+            {/* Stats row */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
               <div className="rounded-xl border border-border bg-card p-4 text-center">
                 <p className="text-2xl font-bold text-primary">{metrics.containersRunning}/{metrics.containers}</p>
                 <p className="text-xs text-muted-foreground mt-1">Containers Ativos</p>
@@ -276,7 +283,11 @@ const Dashboard = () => {
                 <p className="text-xs text-muted-foreground mt-1">Aplicações</p>
               </div>
             </div>
-          </div>
+
+            {/* Top Apps */}
+            <div className="mb-0">
+              <TopApps />
+            </div>
         )}
 
         {/* ===================== TAB: Alertas ===================== */}
