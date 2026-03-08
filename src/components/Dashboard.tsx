@@ -288,6 +288,7 @@ const Dashboard = () => {
             <div className="mb-0">
               <TopApps />
             </div>
+          </div>
         )}
 
         {/* ===================== TAB: Alertas ===================== */}
