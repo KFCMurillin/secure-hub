@@ -50,7 +50,7 @@ const severityConfig: Record<AlertSeverity, { color: string; bg: string; border:
   info: { color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/30", icon: Info },
 };
 
-type Tab = "overview" | "alerts" | "apps";
+type Tab = "overview" | "alerts" | "apps" | "logs";
 
 /* Simulated server metrics */
 const useServerMetrics = () => {
