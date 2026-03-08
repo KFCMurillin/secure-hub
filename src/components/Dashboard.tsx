@@ -210,20 +210,19 @@ const Dashboard = () => {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        {/* Welcome — always visible */}
-        <div className="mb-8 animate-fade-in">
-          <h1 className="text-3xl font-bold text-foreground">
-            Bem-vindo, {user ? user.charAt(0).toUpperCase() + user.slice(1) : ""}! 👋
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Último acesso: {formatLastLogin(lastLogin)}
-          </p>
-          <p className="sm:hidden mt-1 text-sm text-muted-foreground">{formatTime(clock)}</p>
-        </div>
-
         {/* ===================== TAB: Visão Geral ===================== */}
         {activeTab === "overview" && (
           <div className="animate-fade-in">
+            {/* Welcome */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-foreground">
+                Bem-vindo, {user ? user.charAt(0).toUpperCase() + user.slice(1) : ""}! 👋
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Último acesso: {formatLastLogin(lastLogin)}
+              </p>
+              <p className="sm:hidden mt-1 text-sm text-muted-foreground">{formatTime(clock)}</p>
+            </div>
             {/* Quick alert summary */}
             {alertCounts.critical + alertCounts.high > 0 && (
               <button
