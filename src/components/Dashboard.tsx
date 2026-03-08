@@ -148,6 +148,7 @@ const Dashboard = () => {
     { id: "overview", label: "Visão Geral", icon: LayoutDashboard },
     { id: "alerts", label: "Alertas", icon: ShieldAlert, badge: alertCounts.total },
     { id: "apps", label: "Aplicações", icon: AppWindow },
+    { id: "logs", label: "Atividades", icon: Clock },
   ];
 
   return (
