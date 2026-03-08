@@ -1,6 +1,9 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState, useMemo } from "react";
-import { LogOut, Cpu, HardDrive, MemoryStick, Wifi, Search, AlertTriangle, ShieldAlert, Info, XCircle, LayoutDashboard, AppWindow } from "lucide-react";
+import { LogOut, Cpu, HardDrive, MemoryStick, Wifi, Search, AlertTriangle, ShieldAlert, Info, XCircle, LayoutDashboard, AppWindow, Clock } from "lucide-react";
+import MetricCharts from "@/components/MetricCharts";
+import ActivityLog from "@/components/ActivityLog";
+import TopApps from "@/components/TopApps";
 
 /* ============================================================
    CONFIGURAÇÃO: Adicione ou remova aplicações aqui
@@ -47,7 +50,7 @@ const severityConfig: Record<AlertSeverity, { color: string; bg: string; border:
   info: { color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/30", icon: Info },
 };
 
-type Tab = "overview" | "alerts" | "apps";
+type Tab = "overview" | "alerts" | "apps" | "logs";
 
 /* Simulated server metrics */
 const useServerMetrics = () => {
@@ -145,6 +148,7 @@ const Dashboard = () => {
     { id: "overview", label: "Visão Geral", icon: LayoutDashboard },
     { id: "alerts", label: "Alertas", icon: ShieldAlert, badge: alertCounts.total },
     { id: "apps", label: "Aplicações", icon: AppWindow },
+    { id: "logs", label: "Atividades", icon: Clock },
   ];
 
   return (
@@ -242,8 +246,9 @@ const Dashboard = () => {
               </button>
             )}
 
+            {/* Metric bars */}
             <h2 className="mb-4 text-lg font-semibold text-foreground">Métricas do Servidor</h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-10">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
               <div className="rounded-xl border border-border bg-card p-4">
                 <MetricBar label="CPU" value={metrics.cpu} icon={Cpu} />
               </div>
@@ -258,7 +263,13 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {/* Charts */}
+            <div className="mb-8">
+              <MetricCharts />
+            </div>
+
+            {/* Stats row */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
               <div className="rounded-xl border border-border bg-card p-4 text-center">
                 <p className="text-2xl font-bold text-primary">{metrics.containersRunning}/{metrics.containers}</p>
                 <p className="text-xs text-muted-foreground mt-1">Containers Ativos</p>
@@ -271,6 +282,11 @@ const Dashboard = () => {
                 <p className="text-2xl font-bold text-primary">{APPS.length}</p>
                 <p className="text-xs text-muted-foreground mt-1">Aplicações</p>
               </div>
+            </div>
+
+            {/* Top Apps */}
+            <div className="mb-0">
+              <TopApps />
             </div>
           </div>
         )}
@@ -383,6 +399,13 @@ const Dashboard = () => {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ===================== TAB: Atividades ===================== */}
+        {activeTab === "logs" && (
+          <div className="animate-fade-in">
+            <ActivityLog />
           </div>
         )}
       </main>
