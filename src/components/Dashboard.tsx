@@ -1,6 +1,9 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState, useMemo } from "react";
-import { LogOut, Cpu, HardDrive, MemoryStick, Wifi, Search, AlertTriangle, ShieldAlert, Info, XCircle, LayoutDashboard, AppWindow } from "lucide-react";
+import { LogOut, Cpu, HardDrive, MemoryStick, Wifi, Search, AlertTriangle, ShieldAlert, Info, XCircle, LayoutDashboard, AppWindow, Clock } from "lucide-react";
+import MetricCharts from "@/components/MetricCharts";
+import ActivityLog from "@/components/ActivityLog";
+import TopApps from "@/components/TopApps";
 
 /* ============================================================
    CONFIGURAÇÃO: Adicione ou remova aplicações aqui
