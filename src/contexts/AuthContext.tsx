@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
+import { AUTH_CONFIG } from "@/config/auth.config";
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -12,12 +13,6 @@ interface AuthContextType extends AuthState {
   login: (user: string, pass: string) => { success: boolean; error?: string };
   logout: () => void;
 }
-
-const ADMIN_USER = "murillo";
-// In a real app this would be server-side hashed. Here we simulate.
-const ADMIN_PASS = "changeme123";
-const MAX_ATTEMPTS = 5;
-const LOCK_DURATION = 10 * 60 * 1000; // 10 minutes
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -47,10 +42,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: false, error: `Bloqueado. Tente novamente em ${mins} min.` };
     }
 
-    if (user === ADMIN_USER && pass === ADMIN_PASS) {
+    if (user === AUTH_CONFIG.username && pass === AUTH_CONFIG.password) {
       const newState: AuthState = {
         isAuthenticated: true,
-        user: ADMIN_USER,
+        user: AUTH_CONFIG.username,
         lastLogin: new Date().toISOString(),
         failedAttempts: 0,
         lockedUntil: null,
@@ -60,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const attempts = state.failedAttempts + 1;
-    const locked = attempts >= MAX_ATTEMPTS ? Date.now() + LOCK_DURATION : null;
+    const locked = attempts >= AUTH_CONFIG.maxAttempts ? Date.now() + AUTH_CONFIG.lockDurationMs : null;
     persist({ ...state, failedAttempts: attempts, lockedUntil: locked });
     return { success: false, error: "Credenciais inválidas." };
   }, [state]);
