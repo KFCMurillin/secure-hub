@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
+import { AUTH_CONFIG } from "@/config/auth.config";
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -12,12 +13,6 @@ interface AuthContextType extends AuthState {
   login: (user: string, pass: string) => { success: boolean; error?: string };
   logout: () => void;
 }
-
-const ADMIN_USER = "murillo";
-// In a real app this would be server-side hashed. Here we simulate.
-const ADMIN_PASS = "changeme123";
-const MAX_ATTEMPTS = 5;
-const LOCK_DURATION = 10 * 60 * 1000; // 10 minutes
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
