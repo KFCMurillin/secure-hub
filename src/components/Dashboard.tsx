@@ -52,24 +52,29 @@ const severityConfig: Record<AlertSeverity, { color: string; bg: string; border:
 
 type Tab = "overview" | "alerts" | "apps" | "logs";
 
-/* Simulated server metrics */
+/* Real server metrics from backend API */
 const useServerMetrics = () => {
   const [metrics, setMetrics] = useState({
-    cpu: 34, ram: 62, disk: 47, network: 12.4,
-    uptime: "42d 7h 23m", containers: 18, containersRunning: 16,
+    cpu: 0, ram: 0, disk: 0, network: 0,
+    uptime: "—", containers: 0, containersRunning: 0,
   });
 
   useEffect(() => {
-    const t = setInterval(() => {
-      setMetrics((prev) => ({
-        ...prev,
-        cpu: Math.min(100, Math.max(5, prev.cpu + (Math.random() - 0.5) * 8)),
-        ram: Math.min(100, Math.max(20, prev.ram + (Math.random() - 0.5) * 4)),
-        disk: Math.min(100, Math.max(30, prev.disk + (Math.random() - 0.5) * 1)),
-        network: Math.max(0.1, +(prev.network + (Math.random() - 0.5) * 3).toFixed(1)),
-      }));
-    }, 3000);
-    return () => clearInterval(t);
+    const fetchMetrics = async () => {
+      try {
+        const res = await fetch('http://localhost:8080/api/metrics');
+        if (res.ok) {
+          const data = await res.json();
+          setMetrics(data);
+        }
+      } catch (err) {
+        console.error('❌ Erro ao buscar métricas do backend:', err);
+      }
+    };
+
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 3000);  // Atualiza a cada 3s
+    return () => clearInterval(interval);
   }, []);
 
   return metrics;
