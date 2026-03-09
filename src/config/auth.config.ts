@@ -9,7 +9,7 @@
  */
 
 export const AUTH_CONFIG = {
-  username: "murillo",
+  username: "admin",
   password: "changeme123",
   maxAttempts: 5,
   lockDurationMs: 10 * 60 * 1000, // 10 minutos
